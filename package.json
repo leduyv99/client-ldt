@@ -1,19 +1,25 @@
 {
   "name": "client",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "start": "npm run dev",
     "build": "tsc && vite build",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "typescript": "~5.7.2",
-    "vite": "^6.2.0"
+    "dev": "vite"
   },
   "dependencies": {
-    "colyseus.js": "^0.16.5",
-    "pixi.js": "^8.8.1"
+    "@esotericsoftware/spine-pixi-v8": "^4.2.66",
+    "@pixi/sound": "^6.0.1",
+    "@pixi/ui": "^2.2.0",
+    "motion": "^11.12.0",
+    "pixi.js": "^8.6.3"
+  },
+  "devDependencies": {
+    "@assetpack/core": "^1.2.2",
+    "@eslint/js": "^9.16.0",
+    "eslint": "^9.16.0",
+    "typescript": "~5.7.2",
+    "vite": "^6.0.0"
   }
 }

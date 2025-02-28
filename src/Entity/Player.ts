@@ -8,8 +8,7 @@ export class Player extends Container {
     async initialize() {
         const bunnyAsset = await Assets.load('assets/bunny.png')
         const bunny = Sprite.from(bunnyAsset)
-        bunny.x = this.width / 2
-        bunny.y = this.height / 2
+        bunny.anchor.set(0.5)
         this.addChild(bunny)
     }
 }

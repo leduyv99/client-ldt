@@ -6,17 +6,18 @@ import Engine from "./Engine";
 
 (async () => {
   const engine = new Engine()
-  const app = await engine.initialize()
+  const game = await engine.initialize()
 
   const control = new KeyboardController()
 
   const multiplayerController = new MultiplayerController()
-  await multiplayerController.initialize(app)
+  await multiplayerController.initialize(game)
 
-
-
-  app.ticker.add(ticker => {
-    multiplayerController.updatePlayerInput(ticker.deltaTime, control.getAction())
+  game.app.ticker.add((ticker) => {
+    const pos = multiplayerController.updatePlayerInput(ticker.deltaTime, control.getAction())
+    if (pos) {
+      game.camera.trackEntity(engine.app, pos)
+    }
   })
 
 })();

@@ -1,17 +1,20 @@
-import { Application, Color, Renderer } from "pixi.js";
+import { Application, Assets, Color, Sprite } from "pixi.js";
 import { APP_CONTAINER_ID } from "../constants";
+import { Camera } from "../Controller/CameraController";
 
 interface IEngine {
-    initialize: () => Promise<Application<Renderer>>;
+    initialize: () => Promise<IEngine>;
 }
 
 class Engine implements IEngine {
-    private app: Application;
     private masterContainer: HTMLDivElement;
+    app: Application;
+    camera: Camera;
 
     constructor() {
         this.app = new Application()
         this.masterContainer = document.getElementById(APP_CONTAINER_ID) as HTMLDivElement
+        this.camera = new Camera()
     }
 
     async initialize() {
@@ -22,7 +25,15 @@ class Engine implements IEngine {
         })
 
         this.masterContainer.appendChild(this.app.canvas)
-        return this.app
+
+        const map = await Assets.load('assets/map.webp')
+        const map_sprite = Sprite.from(map)
+        map_sprite.scale.set(5)
+        
+        this.camera.addChild(map_sprite)
+        this.app.stage.addChild(this.camera)
+        
+        return this
     }
 }
 

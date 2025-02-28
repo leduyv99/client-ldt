@@ -23,7 +23,6 @@ export class KeyboardController {
   }
 
   getAction(): Array<MOVE> {
-		// console.log("this.keysMap", this.keysMap)
     const moves: MOVE[] = [];	
     for (let key of this.keysMap.keys()) {
       if (this.keysMap.get(key)) {

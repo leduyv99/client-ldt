@@ -1,23 +1,25 @@
-import { Application, Container, Renderer } from "pixi.js";
-
-export const CAMERA_CONFIG = {
-    cameraSpeed: 5,
-    zoomFactor: 2,
-    lerpSpeed: 0.1,
-};
+import { Container } from "pixi.js";
+import { Engine } from "../Engine";
 
 export class Camera extends Container {
+    private zoomFactor;
+    private lerpSpeed;
+
     constructor() {
         super()
+        this.zoomFactor = 2
+        this.lerpSpeed = 0.1
     }
 
-    trackEntity(app: Application<Renderer>, { x, y }: Vector2) {
+    trackEntity({ x, y }: Vector2) {
+        const app = Engine.getInstance()
+
         const screenCenterX = app.renderer.width / 2;
         const screenCenterY = app.renderer.height / 2;
 
-        this.x += (screenCenterX - x * CAMERA_CONFIG.zoomFactor - this.x) * CAMERA_CONFIG.lerpSpeed;
-        this.y += (screenCenterY - y * CAMERA_CONFIG.zoomFactor - this.y) * CAMERA_CONFIG.lerpSpeed;
+        this.x += (screenCenterX - x * this.zoomFactor - this.x) * this.lerpSpeed;
+        this.y += (screenCenterY - y * this.zoomFactor - this.y) * this.lerpSpeed;
 
-        this.scale.set(CAMERA_CONFIG.zoomFactor);
+        this.scale.set(this.zoomFactor);
     }
 }

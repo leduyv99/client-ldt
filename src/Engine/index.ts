@@ -1,40 +1,48 @@
-import { Application, Assets, Color, Sprite } from "pixi.js";
-import { APP_CONTAINER_ID } from "../constants";
+import { Application } from "pixi.js";
 import { Camera } from "../Controller/CameraController";
+import { APP_CONTAINER_ID } from "../constants"
 
-interface IEngine {
-    initialize: () => Promise<IEngine>;
-}
+const MAIN_WORLD_LABEL = 'main_world'
+export class Engine extends Application {
+    private static instance: Engine
 
-class Engine implements IEngine {
-    private masterContainer: HTMLDivElement;
-    app: Application;
-    camera: Camera;
-
-    constructor() {
-        this.app = new Application()
-        this.masterContainer = document.getElementById(APP_CONTAINER_ID) as HTMLDivElement
-        this.camera = new Camera()
+    static getInstance() {
+        if (!this.instance) {
+            this.instance = new Application()
+        }
+        return this.instance
     }
 
-    async initialize() {
-        await this.app.init({
-            antialias: true,
-            resizeTo: window,
-            backgroundColor: new Color('#1E1E1E')
-        })
+    private static addMainCamera() {
+        this.instance = Engine.getInstance()
+        const word = this.instance.stage.getChildByLabel(MAIN_WORLD_LABEL)
 
-        this.masterContainer.appendChild(this.app.canvas)
+        if (!word) {
+            const word = new Camera()
+            word.label = MAIN_WORLD_LABEL
+            this.instance.stage.addChild(word)
+        }
 
-        const map = await Assets.load('assets/map.webp')
-        const map_sprite = Sprite.from(map)
-        map_sprite.scale.set(5)
-        
-        this.camera.addChild(map_sprite)
-        this.app.stage.addChild(this.camera)
-        
-        return this
+        return this.instance
+    }
+
+    static getWorld(): Camera {
+        this.instance = Engine.getInstance()
+        const word = this.instance.stage.getChildByLabel(MAIN_WORLD_LABEL) as Camera | null
+
+        if (word === null) {
+            this.instance = this.addMainCamera()
+            return this.instance.stage.getChildByLabel(MAIN_WORLD_LABEL) as Camera
+        }
+
+        return word
+    }
+
+    static async init() {
+        const htmlContainer = document.getElementById(APP_CONTAINER_ID)
+        if (!htmlContainer) return console.log('HTML Container not found.')
+        this.instance = Engine.getInstance()
+        await this.instance.init({ antialias: true, resizeTo: window })
+        htmlContainer.appendChild(this.instance.canvas)
     }
 }
-
-export default Engine

@@ -2,9 +2,9 @@ import { Client, getStateCallbacks, Room } from "colyseus.js";
 import { ACTIONS, GAME_CONFIG, ROOMS } from "../constants";
 import { Player } from "../Entity/Player";
 import { MOVE } from "./InputController/constants";
-import Engine from "../Engine";
+import { Engine } from "../Engine";
 
-const socket_server_ip = "http://26.217.91.46:2567";
+const socket_server_ip = "http://localhost:2567";
 
 export class MultiplayerController {
   private client: Client;
@@ -15,11 +15,14 @@ export class MultiplayerController {
     this.client = new Client(socket_server_ip);
   }
 
-  async initialize(game: Engine) {
+  async initialize() {
+    const word = Engine.getWorld()
+
     this.room = await this.client.joinOrCreate(ROOMS.main);
 
     if (this.room !== null) {
-      document.title = this.room.roomId;
+      document.title = this.room.name;
+      
       const callback = getStateCallbacks(this.room);
 
       callback(this.room.state).players.onAdd(async (player, sessionId) => {
@@ -28,13 +31,13 @@ export class MultiplayerController {
         _player.x = player.x;
         _player.y = player.y;
         this.players.set(sessionId, _player);
-				game.camera.addChild(_player);
+        word.addChild(_player);
       });
 
       callback(this.room.state).players.onRemove((_, sessionId) => {
         const _player = this.players.get(sessionId);
-        if (_player) {
-          game.camera.removeChild(_player);
+        if (_player ) {
+          word.removeChild(_player);
           this.players.delete(sessionId);
         }
       });
@@ -54,7 +57,6 @@ export class MultiplayerController {
   }
 
   updatePlayerInput(deltaTime: number, moves: MOVE[]) {
-		
 		if (!this.room) return;
     if (!this.players.has(this.room.sessionId)) return;
 
@@ -84,11 +86,18 @@ export class MultiplayerController {
         }
       }
     }
-		params.x = Math.max(0, Math.min(params.x , 5120 - player.width))
-		params.y = Math.max(0, Math.min(params.y, 5120 - player.height));
+
+    const world = Engine.getWorld()
+    const worldMap = world.getChildAt(0).getFastGlobalBounds()
+
+		params.x = Math.max(0, Math.min(params.x , worldMap.width - player.width))
+		params.y = Math.max(0, Math.min(params.y, worldMap.height - player.height));
+    
     player.x = params.x;
     player.y = params.y;
+
     this.room.send(ACTIONS.move, params);
+
 		return params
   }
 }

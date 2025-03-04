@@ -1,22 +1,28 @@
+import { Assets, Sprite } from "pixi.js";
 import { KeyboardController } from "./Controller/InputController/KeyboardController";
 import { MultiplayerController } from "./Controller/MultiplayerController";
-import Engine from "./Engine";
-
-
+import { Engine } from "./Engine";
 
 (async () => {
-  const engine = new Engine()
-  const game = await engine.initialize()
+  const engine = Engine.getInstance()
+  await Engine.init()
 
-  const control = new KeyboardController()
+  const word = Engine.getWorld()
+  const control = KeyboardController.getInstance()
+
+  // add world map
+  const mapAsset = await Assets.load('./assets/map.webp')
+  word.addChildAt(Sprite.from(mapAsset), 0)
+  //
 
   const multiplayerController = new MultiplayerController()
-  await multiplayerController.initialize(game)
+  await multiplayerController.initialize()
 
-  game.app.ticker.add((ticker) => {
-    const pos = multiplayerController.updatePlayerInput(ticker.deltaTime, control.getAction())
-    if (pos) {
-      game.camera.trackEntity(engine.app, pos)
+
+  engine.ticker.add((ticker) => {
+    const playerPosition = multiplayerController.updatePlayerInput(ticker.deltaTime, control.getActions())
+    if (playerPosition) {
+      word.trackEntity(playerPosition)
     }
   })
 

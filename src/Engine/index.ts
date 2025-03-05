@@ -1,8 +1,7 @@
-import { Application } from "pixi.js";
+import { Application, Assets, UnresolvedAsset } from "pixi.js";
 import { Camera } from "../Controller/CameraController";
-import { APP_CONTAINER_ID } from "../constants"
+import { APP_CONTAINER_ID, LABELS } from "../constants"
 
-const MAIN_WORLD_LABEL = 'main_world'
 export class Engine extends Application {
     private static instance: Engine
 
@@ -15,11 +14,11 @@ export class Engine extends Application {
 
     private static addMainCamera() {
         this.instance = Engine.getInstance()
-        const word = this.instance.stage.getChildByLabel(MAIN_WORLD_LABEL)
+        const word = this.instance.stage.getChildByLabel(LABELS.world)
 
         if (!word) {
             const word = new Camera()
-            word.label = MAIN_WORLD_LABEL
+            word.label = LABELS.world
             this.instance.stage.addChild(word)
         }
 
@@ -28,14 +27,18 @@ export class Engine extends Application {
 
     static getWorld(): Camera {
         this.instance = Engine.getInstance()
-        const word = this.instance.stage.getChildByLabel(MAIN_WORLD_LABEL) as Camera | null
+        const word = this.instance.stage.getChildByLabel(LABELS.world) as Camera | null
 
         if (word === null) {
             this.instance = this.addMainCamera()
-            return this.instance.stage.getChildByLabel(MAIN_WORLD_LABEL) as Camera
+            return this.instance.stage.getChildByLabel(LABELS.world) as Camera
         }
 
         return word
+    }
+
+    static getAssests(key: string) {
+
     }
 
     static async init() {
@@ -44,5 +47,15 @@ export class Engine extends Application {
         this.instance = Engine.getInstance()
         await this.instance.init({ antialias: true, resizeTo: window })
         htmlContainer.appendChild(this.instance.canvas)
+
+        // load assets 
+        const assets: Array<UnresolvedAsset> = [
+            { alias: 'bunny', src: 'assets/bunny.png' },
+            { alias: 'map', src: 'assets/map.webp' },
+            { alias: 'character', src: 'assets/Characters/Char_001_Idle.png' }
+        ]
+
+        Assets.add(assets)
+        await Assets.load(assets.map(a => a.alias))
     }
 }

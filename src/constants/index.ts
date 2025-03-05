@@ -11,3 +11,8 @@ export const enum ACTIONS {
 export const GAME_CONFIG = {
     velocity: 10
 }
+
+export const enum LABELS  {
+    world = "main_world",
+    world_map = "main_world_map"
+}

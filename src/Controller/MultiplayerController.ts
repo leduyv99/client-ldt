@@ -1,5 +1,5 @@
 import { Client, getStateCallbacks, Room } from "colyseus.js";
-import { ACTIONS, GAME_CONFIG, ROOMS } from "../constants";
+import { ACTIONS, GAME_CONFIG, LABELS, ROOMS } from "../constants";
 import { Player } from "../Entity/Player";
 import { MOVE } from "./InputController/constants";
 import { Engine } from "../Engine";
@@ -27,7 +27,7 @@ export class MultiplayerController {
 
       callback(this.room.state).players.onAdd(async (player, sessionId) => {
         const _player = new Player();
-        await _player.initialize();
+        await _player.ready
         _player.x = player.x;
         _player.y = player.y;
         this.players.set(sessionId, _player);
@@ -42,18 +42,15 @@ export class MultiplayerController {
         }
       });
 
-      this.room.onMessage(ACTIONS.move, ({ sessionId, x, y }) => {
+      this.room.onMessage(ACTIONS.move, ({ sessionId, x, y, animation }) => {
         const _player = this.players.get(sessionId);
         if (_player) {
           _player.x = x;
           _player.y = y;
+          _player.setAnimation(animation)
         }
       });
     }
-  }
-
-  getPlayers() {
-    return this.players;
   }
 
   updatePlayerInput(deltaTime: number, moves: MOVE[]) {
@@ -70,28 +67,36 @@ export class MultiplayerController {
       switch (move) {
         case MOVE.up: {
           params.y -= speed;
+          player.setAnimation('behind')
           break;
         }
         case MOVE.down: {
           params.y += speed;
+          player.setAnimation('idle')
           break;
         }
         case MOVE.left: {
           params.x -= speed;
+          player.setAnimation('left')
           break;
         }
         case MOVE.right: {
           params.x += speed;
+          player.setAnimation('right')
           break;
         }
       }
     }
 
     const world = Engine.getWorld()
-    const worldMap = world.getChildAt(0).getFastGlobalBounds()
+    const worldMap = world.getChildByLabel(LABELS.world_map)
+    if (worldMap === null) return
 
-		params.x = Math.max(0, Math.min(params.x , worldMap.width - player.width))
-		params.y = Math.max(0, Math.min(params.y, worldMap.height - player.height));
+    const playerWCenter = player.width / 2
+    const playerHCenter = player.height / 2
+
+		params.x = Math.max(playerWCenter, Math.min(params.x , worldMap.width - playerWCenter))
+		params.y = Math.max(playerHCenter, Math.min(params.y, worldMap.height - playerHCenter));
     
     player.x = params.x;
     player.y = params.y;

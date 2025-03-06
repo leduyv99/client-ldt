@@ -1,4 +1,5 @@
 import { Client, getStateCallbacks, Room } from "colyseus.js";
+
 import { ACTIONS, GAME_CONFIG, LABELS, ROOMS } from "../constants";
 import { Player } from "../Entity/Player";
 import { MOVE } from "./InputController/constants";
@@ -22,7 +23,6 @@ export class MultiplayerController {
 
     if (this.room !== null) {
       document.title = this.room.name;
-      
       const callback = getStateCallbacks(this.room);
 
       callback(this.room.state).players.onAdd(async (player, sessionId) => {
@@ -30,13 +30,17 @@ export class MultiplayerController {
         await _player.ready
         _player.x = player.x;
         _player.y = player.y;
+        // _player.setIdx(0);
         this.players.set(sessionId, _player);
         word.addChild(_player);
+        callback(player).onChange(async () => {
+          await _player.initialize();
+        })
       });
 
       callback(this.room.state).players.onRemove((_, sessionId) => {
         const _player = this.players.get(sessionId);
-        if (_player ) {
+        if (_player) {
           word.removeChild(_player);
           this.players.delete(sessionId);
         }
@@ -50,11 +54,30 @@ export class MultiplayerController {
           _player.setAnimation(animation)
         }
       });
+
+      this.room.onMessage(ACTIONS.updateAsset, ({ sessionId, indexAsset }) => {
+        console.log(this.players)
+        const _player = this.players.get(sessionId);
+        if (_player) {
+          _player.setIdx(indexAsset)
+        }
+      });
+    }
+  }
+
+  async updatePlayerAsset(idx: number) {
+    if (!this.room) return;
+    if (!this.players.has(this.room.sessionId)) return;
+    const player = this.players.get(this.room.sessionId) as Player;
+    if (player.getIdx() !== idx) {
+      this.room.send(ACTIONS.updateAsset, idx);
+      player.setIdx(idx)
+      await player.initialize();
     }
   }
 
   updatePlayerInput(deltaTime: number, moves: MOVE[]) {
-		if (!this.room) return;
+    if (!this.room) return;
     if (!this.players.has(this.room.sessionId)) return;
 
     const player = this.players.get(this.room.sessionId) as Player;
@@ -94,15 +117,16 @@ export class MultiplayerController {
 
     const playerWCenter = player.width / 2
     const playerHCenter = player.height / 2
+    console.log(worldMap, player)
 
-		params.x = Math.max(playerWCenter, Math.min(params.x , worldMap.width - playerWCenter))
-		params.y = Math.max(playerHCenter, Math.min(params.y, worldMap.height - playerHCenter));
-    
+    params.x = Math.max(playerWCenter, Math.min(params.x, worldMap.width - playerWCenter))
+    params.y = Math.max(playerHCenter, Math.min(params.y, worldMap.height - playerHCenter));
+
     player.x = params.x;
     player.y = params.y;
 
     this.room.send(ACTIONS.move, params);
 
-		return params
+    return params
   }
 }

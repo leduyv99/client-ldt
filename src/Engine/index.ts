@@ -50,9 +50,14 @@ export class Engine extends Application {
 
         // load assets 
         const assets: Array<UnresolvedAsset> = [
-            { alias: 'bunny', src: 'assets/bunny.png' },
+            { alias: 'bunny', src: 'assets/bunny1.png' },
             { alias: 'map', src: 'assets/map.webp' },
-            { alias: 'character', src: 'assets/Characters/Char_001_Idle.png' }
+            { alias: 'character1', src: 'assets/Characters/Char_001_Idle.png' },
+            { alias: 'character2', src: 'assets/Characters/Char_002_Idle.png' },
+            { alias: 'character3', src: 'assets/Characters/Char_003_Idle.png' },
+            { alias: 'character4', src: 'assets/Characters/Char_004_Idle.png' },
+            { alias: 'character5', src: 'assets/Characters/Char_005_Idle.png' },
+            { alias: 'character6', src: 'assets/Characters/Char_006_Idle.png' }
         ]
 
         Assets.add(assets)

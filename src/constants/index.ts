@@ -5,7 +5,8 @@ export const enum ROOMS {
 }
 
 export const enum ACTIONS {
-    move
+    move,
+    updateAsset
 }
 
 export const GAME_CONFIG = {

@@ -7,5 +7,5 @@ export default defineConfig({
     open: true,
     host: true
   },
-  base: 'client-ldt'
+  base: '/client-ldt/'
 });

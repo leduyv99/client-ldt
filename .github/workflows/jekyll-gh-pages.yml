@@ -18,7 +18,10 @@ jobs:
         uses: actions/setup-node@v4
 
       - name: Build project
-        run: npm run build
+        run: |
+          npm install -g bun
+          bun i
+          bun run build
 
       - name: Upload production-ready build files
         uses: actions/upload-artifact@v4

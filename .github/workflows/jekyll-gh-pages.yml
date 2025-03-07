@@ -54,5 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: List files in the dist directory
+        run: ls -alh dist
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4

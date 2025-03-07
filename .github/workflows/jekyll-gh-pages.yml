@@ -35,6 +35,7 @@ jobs:
       - name: Build
         run: |
           npm install -g bun
+          bun i
           bun run build
       - name: Setup Pages
         uses: actions/configure-pages@v4

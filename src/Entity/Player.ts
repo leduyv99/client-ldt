@@ -1,8 +1,8 @@
 import {
   AnimatedSprite,
-  Assets,
+  // Assets,
   Container,
-  Sprite,
+  // Sprite,
   Spritesheet,
   SpritesheetData,
   Texture,

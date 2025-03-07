@@ -37,9 +37,9 @@ export class Engine extends Application {
         return word
     }
 
-    static getAssests(key: string) {
+    // static getAssests(key: string) {
 
-    }
+    // }
 
     static async init() {
         const htmlContainer = document.getElementById(APP_CONTAINER_ID)

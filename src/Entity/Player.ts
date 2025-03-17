@@ -1,5 +1,6 @@
 import {
   AnimatedSprite,
+  Assets,
   // Assets,
   Container,
   // Sprite,
@@ -7,34 +8,30 @@ import {
   SpritesheetData,
   Texture,
 } from "pixi.js";
+import { getPlayerAssetsAlias } from "../Utils";
 
 const spriteBox = { w: 72 - 36, h: 72 - 16 };
-const atlas = (src: string): SpritesheetData => {
-  return {
+const atlas = (src: string): SpritesheetData => ({
     frames: {
-      // Idle frames
-      idle_1: { frame: { x: 18, y: 16, ...spriteBox } },
-      idle_2: { frame: { x: 72 * 1 + 18, y: 16, ...spriteBox } },
-      idle_3: { frame: { x: 72 * 2 + 18, y: 16, ...spriteBox } },
-      idle_4: { frame: { x: 72 * 3 + 18, y: 16, ...spriteBox } },
+      front_0: { frame: { x: 18, y: 16, ...spriteBox } },
+      front_1: { frame: { x: 72 * 1 + 18, y: 16, ...spriteBox } },
+      front_2: { frame: { x: 72 * 2 + 18, y: 16, ...spriteBox } },
+      front_3: { frame: { x: 72 * 3 + 18, y: 16, ...spriteBox } },
 
-      // Moving left frames
-      left_1: { frame: { x: 18, y: 72 + 16, ...spriteBox } },
-      left_2: { frame: { x: 72 * 1 + 18, y: 72 + 16, ...spriteBox } },
-      left_3: { frame: { x: 72 * 2 + 18, y: 72 + 16, ...spriteBox } },
-      left_4: { frame: { x: 72 * 3 + 18, y: 72 + 16, ...spriteBox } },
+      left_0: { frame: { x: 18, y: 72 + 16, ...spriteBox } },
+      left_1: { frame: { x: 72 * 1 + 18, y: 72 + 16, ...spriteBox } },
+      left_2: { frame: { x: 72 * 2 + 18, y: 72 + 16, ...spriteBox } },
+      left_3: { frame: { x: 72 * 3 + 18, y: 72 + 16, ...spriteBox } },
 
-      // Moving right frames
-      right_1: { frame: { x: 18, y: 144 + 16, ...spriteBox } },
-      right_2: { frame: { x: 72 * 1 + 18, y: 144 + 16, ...spriteBox } },
-      right_3: { frame: { x: 72 * 2 + 18, y: 144 + 16, ...spriteBox } },
-      right_4: { frame: { x: 72 * 3 + 18, y: 144 + 16, ...spriteBox } },
+      right_0: { frame: { x: 18, y: 144 + 16, ...spriteBox } },
+      right_1: { frame: { x: 72 * 1 + 18, y: 144 + 16, ...spriteBox } },
+      right_2: { frame: { x: 72 * 2 + 18, y: 144 + 16, ...spriteBox } },
+      right_3: { frame: { x: 72 * 3 + 18, y: 144 + 16, ...spriteBox } },
 
-      // Moving right frames
-      behind_1: { frame: { x: 18, y: 216 + 16, ...spriteBox } },
-      behind_2: { frame: { x: 72 * 1 + 18, y: 216 + 16, ...spriteBox } },
-      behind_3: { frame: { x: 72 * 2 + 18, y: 216 + 16, ...spriteBox } },
-      behind_4: { frame: { x: 72 * 3 + 18, y: 216 + 16, ...spriteBox } },
+      back_0: { frame: { x: 18, y: 216 + 16, ...spriteBox } },
+      back_1: { frame: { x: 72 * 1 + 18, y: 216 + 16, ...spriteBox } },
+      back_2: { frame: { x: 72 * 2 + 18, y: 216 + 16, ...spriteBox } },
+      back_3: { frame: { x: 72 * 3 + 18, y: 216 + 16, ...spriteBox } },
     },
     meta: {
       image: src,
@@ -43,31 +40,26 @@ const atlas = (src: string): SpritesheetData => {
       scale: 1,
     },
     animations: {
-      idle: ["idle_1", "idle_2", "idle_3", "idle_4"],
-      left: ["left_1", "left_2", "left_3", "left_4"],
-      right: ["right_1", "right_2", "right_3", "right_4"],
-      behind: ["behind_1", "behind_2", "behind_3", "behind_4"],
+      front: Array.from({ length: 4 }, (_, index) => `front_${index}`),
+      left: Array.from({ length: 4 }, (_, index) => `left_${index}`),
+      right: Array.from({ length: 4 }, (_, index) => `right_${index}`),
+      back: Array.from({ length: 4 }, (_, index) => `back_${index}`),
     },
   }
-};
+);
 
-type Animation = 'idle' | 'left' | 'right' | 'behind'
+export type PlayerDirection = 'front' | 'left' | 'right' | 'back'
+export type PlayerAnimation = 'idle' | 'move'
 
 export class Player extends Container {
-
   private animation!: AnimatedSprite;
   private spriteSheet!: Spritesheet<SpritesheetData>;
-  private currentAnimation: string = "idle";
-  ready: Promise<void>;
-  private asset = [
-    'assets/Characters/Char_001_Idle.png',
-    'assets/Characters/Char_002_Idle.png',
-    'assets/Characters/Char_003_Idle.png',
-    'assets/Characters/Char_004_Idle.png',
-    'assets/Characters/Char_005_Idle.png',
-    'assets/Characters/Char_006_Idle.png',
-  ]
-  private idx = 0;
+  
+  public currentAnimation: PlayerAnimation = "idle";
+  public currentDirection: PlayerDirection = 'front';
+
+  public ready: Promise<void>;
+  private sheetNo = 0;
 
   constructor() {
     super();
@@ -76,46 +68,48 @@ export class Player extends Container {
     this.ready = this.Init();
   }
 
-  getIdx() {
-    return this.idx;
-  }
-
-  setIdx(index: number) {
-    this.idx = index;
-  }
-
-  async initialize() {
-    // this.animation.stop();
-    this.spriteSheet = new Spritesheet(
-      Texture.from(this.asset[this.idx] as string),
-      atlas(this.asset[this.idx])
-    );
-    await this.spriteSheet.parse();
-    
-    this.animation.textures = this.spriteSheet.animations.idle
-    this.animation.play();
-  }
-
   private async Init() {
+    const assets = Assets.get(getPlayerAssetsAlias('idle', this.sheetNo))
+
     this.spriteSheet = new Spritesheet(
-      Texture.from(this.asset[this.idx] as string),
-      atlas(this.asset[this.idx])
+      assets,
+      atlas(assets.label)
     );
+
     await this.spriteSheet.parse();
 
-    this.animation = new AnimatedSprite(this.spriteSheet.animations.idle);
+    this.animation = new AnimatedSprite(this.spriteSheet.animations['front']);
+
+    console.log(this.animation)
     this.animation.animationSpeed = 0.1;
     this.animation.play();
     this.animation.anchor.set(0.5);
     this.addChild(this.animation);
   }
 
-  setAnimation(name: Animation) {
-    if (this.currentAnimation === name) return;
-    if (this.spriteSheet.animations[name]) {
-      this.animation.textures = this.spriteSheet.animations[name];
-      this.animation.play();
-      this.currentAnimation = name;
+  setSpriteSheet(no: number) {
+    this.sheetNo = no;
+  }
+
+  async setAnimation(animation: PlayerAnimation, direction: PlayerDirection) {
+    if (
+        this.currentAnimation === animation &&
+        this.currentDirection === direction 
+    ) return;
+
+    if (this.currentAnimation !== animation) {
+      const assets = Assets.get(getPlayerAssetsAlias(animation, this.sheetNo))
+        this.spriteSheet = new Spritesheet(
+            assets,
+            atlas(assets.label)
+          );
+        await this.spriteSheet.parse();
     }
+
+    this.animation.textures = this.spriteSheet.animations[direction] 
+    this.animation.play()
+
+    this.currentAnimation = animation
+    this.currentDirection = direction
   }
 }

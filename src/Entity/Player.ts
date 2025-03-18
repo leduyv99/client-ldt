@@ -55,8 +55,8 @@ export class Player extends Container {
   private animation!: AnimatedSprite;
   private spriteSheet!: Spritesheet<SpritesheetData>;
   
-  public currentAnimation: PlayerAnimation = "idle";
-  public currentDirection: PlayerDirection = 'front';
+  private currentAnimation: PlayerAnimation = "idle";
+  private currentDirection: PlayerDirection = 'front';
 
   public ready: Promise<void>;
   private sheetNo = 0;
@@ -80,10 +80,9 @@ export class Player extends Container {
 
     this.animation = new AnimatedSprite(this.spriteSheet.animations['front']);
 
-    console.log(this.animation)
     this.animation.animationSpeed = 0.1;
-    this.animation.play();
     this.animation.anchor.set(0.5);
+    this.animation.play();
     this.addChild(this.animation);
   }
 
@@ -111,5 +110,12 @@ export class Player extends Container {
 
     this.currentAnimation = animation
     this.currentDirection = direction
+  }
+
+  getCurrentState() {
+    return {
+      animation: this.currentAnimation,
+      direction: this.currentDirection
+    }
   }
 }

@@ -38,6 +38,11 @@ export class Engine extends Application {
         return word
     }
 
+    static getMap(name: string) {
+        const world = this.getWorld();
+        return world.getChildByLabel(name)
+    }
+
     static async init() {
         const htmlContainer = document.getElementById(APP_CONTAINER_ID)
         if (!htmlContainer) return console.log('HTML Container not found.')
@@ -48,7 +53,7 @@ export class Engine extends Application {
         // load assets 
         const assets: Array<UnresolvedAsset> = [
             { alias: 'bunny', src: 'assets/bunny1.png' },
-            { alias: 'map', src: 'assets/map.webp' },
+            { alias: LABELS.world_map, src: 'assets/map.webp' },
             ...Array.from({ length: 6 }, (_, index) => ({
                 alias: getPlayerAssetsAlias('idle', index),
                 src: `assets/Characters/${index.toString().padStart(3, '0')}/idle.png`

@@ -4,6 +4,7 @@ import { ACTIONS, GAME_CONFIG, LABELS, ROOMS } from "../constants";
 import { Player } from "../Entity/Player";
 import { MOVE } from "./InputController/constants";
 import { Engine } from "../Engine";
+import { Assets, Container, ContainerChild, Sprite } from "pixi.js";
 
 const socket_server_ip = "http://localhost:2567";
 
@@ -11,35 +12,32 @@ export class MultiplayerController {
   private client: Client;
   private room: Room<any> | null = null;
   private players: Map<string, Player> = new Map();
+  private currentMap: Container<ContainerChild> | null = null
 
   constructor() {
     this.client = new Client(socket_server_ip);
+    this.SetCurrentMap();
   }
 
-  async initialize() {
+  async Start() {
     const word = Engine.getWorld()
-
     this.room = await this.client.joinOrCreate(ROOMS.main);
 
     if (this.room !== null) {
       document.title = this.room.name;
-      const callback = getStateCallbacks(this.room);
+      const $ = getStateCallbacks(this.room);
 
-      callback(this.room.state).players.onAdd(async (player, sessionId) => {
+      $(this.room.state).players.onAdd(async (player, sessionId) => {
         const _player = new Player();
         await _player.ready
-        _player.x = player.x;
-        _player.y = player.y;
+
+        _player.position.set(player.x, player.y)
 
         this.players.set(sessionId, _player);
         word.addChild(_player);
-
-        // callback(player).onChange(async () => {
-        //   await _player.ready;
-        // })
       });
 
-      callback(this.room.state).players.onRemove((_, sessionId) => {
+      $(this.room.state).players.onRemove((_, sessionId) => {
         const _player = this.players.get(sessionId);
         if (_player) {
           word.removeChild(_player);
@@ -50,90 +48,83 @@ export class MultiplayerController {
       this.room.onMessage(ACTIONS.move, ({ sessionId, x, y, animation, direction }) => {
         const _player = this.players.get(sessionId);
         if (_player) {
-          _player.x = x;
-          _player.y = y;
+          _player.position.set(x, y)
           _player.setAnimation(animation, direction)
-        }
-      });
-
-      this.room.onMessage(ACTIONS.updateAsset, ({ sessionId, indexAsset }) => {
-        console.log(this.players)
-        const _player = this.players.get(sessionId);
-        if (_player) {
-          _player.setSpriteSheet(indexAsset)
         }
       });
     }
   }
 
-  // async updatePlayerAsset(idx: number) {
-  //   if (!this.room) return;
-  //   if (!this.players.has(this.room.sessionId)) return;
-  //   const player = this.players.get(this.room.sessionId) as Player;
-  //   if (player.getIdx() !== idx) {
-  //     this.room.send(ACTIONS.updateAsset, idx);
-  //     player.setIdx(idx)
-  //     await player.initialize();
-  //   }
-  // }
+  SetCurrentMap(mapName: string = LABELS.world_map) {
+    const mapSprite = Sprite.from(Assets.get(mapName))
+    mapSprite.label = mapName
+    mapSprite.setSize(2048)
+    const word = Engine.getWorld()
+    word.addChildAt(mapSprite, 0)
+    this.currentMap = Engine.getMap(mapName)
+  }
 
-  updatePlayerInput(deltaTime: number, moves: MOVE[]) {
-    if (!this.room) return;
-    if (!this.players.has(this.room.sessionId)) return;
+  UpdatePlayerInput(deltaTime: number, moves: MOVE[]) {
+    if (!this.room) return null;
+    if (!this.players.has(this.room.sessionId)) return null;
 
     const player = this.players.get(this.room.sessionId) as Player;
+    const state = player.getCurrentState()
+
     const params = { 
       x: player.x, 
       y: player.y, 
-      animation: player.currentAnimation, 
-      direction: player.currentDirection 
+      animation: state.animation, 
+      direction: state.direction 
     };
 
     if (moves.length === 0) {
-      player.setAnimation("idle", player.currentDirection)
+      params.animation = 'idle'
+      player.setAnimation(params.animation, params.direction)
+      if (state.animation !== 'idle') {
+        this.room.send(ACTIONS.move, params);
+      }
       return params;
     }
 
     const speed = deltaTime * GAME_CONFIG.velocity;
+
+    params.animation = 'move'
     for (const move of moves) {
       switch (move) {
         case MOVE.up: {
           params.y -= speed;
-          player.setAnimation("move", "back")
+          params.direction = 'back'
           break;
         }
         case MOVE.down: {
           params.y += speed;
-          player.setAnimation("move", "front")
+          params.direction = 'front'
           break;
         }
         case MOVE.left: {
           params.x -= speed;
-          player.setAnimation("move", "left")
+          params.direction = 'left'
           break;
         }
         case MOVE.right: {
           params.x += speed;
-          player.setAnimation("move", "right")
+          params.direction = 'right'
           break;
         }
       }
     }
 
-    const world = Engine.getWorld()
-    const worldMap = world.getChildByLabel(LABELS.world_map)
-    if (worldMap === null) return
+    if (this.currentMap !== null) {
+      const playerWCenter = player.width / 2
+      const playerHCenter = player.height / 2
+  
+      params.x = Math.max(playerWCenter, Math.min(params.x, this.currentMap.width - playerWCenter))
+      params.y = Math.max(playerHCenter, Math.min(params.y, this.currentMap.height - playerHCenter));
+    }
 
-    const playerWCenter = player.width / 2
-    const playerHCenter = player.height / 2
-
-    params.x = Math.max(playerWCenter, Math.min(params.x, worldMap.width - playerWCenter))
-    params.y = Math.max(playerHCenter, Math.min(params.y, worldMap.height - playerHCenter));
-    params.animation = player.currentAnimation;
-    params.direction = player.currentDirection;
-
-    player.x = params.x;
-    player.y = params.y;
+    player.position.set(params.x, params.y)
+    player.setAnimation(params.animation, params.direction)
 
     this.room.send(ACTIONS.move, params);
 

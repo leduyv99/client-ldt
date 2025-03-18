@@ -1,9 +1,8 @@
-import { Assets, Sprite } from "pixi.js";
+import { Engine } from "./Engine";
 import { KeyboardController } from "./Controller/InputController/KeyboardController";
 import { MultiplayerController } from "./Controller/MultiplayerController";
-import { Engine } from "./Engine";
+import { Ticker } from "pixi.js";
 // import { SwitcherController } from "./Controller/SwitcherController";
-import { LABELS } from "./constants";
 
 (async () => {
   const engine = Engine.getInstance()
@@ -14,25 +13,14 @@ import { LABELS } from "./constants";
 
   // const switcher = new SwitcherController(Array.from({ length: 5 }, (_, index) => assets[`player${index}`]));
 
-  // engine.stage.addChild(switcher.switcher)
-  // add world map
-  const mapSprite = Sprite.from(Assets.get("map"))
-
-  mapSprite.label = LABELS.world_map
-  mapSprite.setSize(2048)
-  word.addChildAt(mapSprite, 0)
-  //
-
   const multiplayerController = new MultiplayerController()
-  await multiplayerController.initialize()
+  await multiplayerController.Start()
 
-  engine.ticker.add((ticker) => {
-    // console.log(switcher.idx)
-    // multiplayerController.updatePlayerAsset(switcher.idx)
-    const playerPosition = multiplayerController.updatePlayerInput(ticker.deltaTime, control.getActions())
-    if (playerPosition) {
-      word.trackEntity(playerPosition)
-    }
-  })
+  engine.ticker.add(Update)
 
+  function Update(ticker: Ticker) {
+    const playerPosition = multiplayerController.UpdatePlayerInput(ticker.deltaTime, control.getActions())
+    const isPlayerMoved = playerPosition !== null && playerPosition.animation !== 'idle'
+    if (isPlayerMoved) word.trackEntity(playerPosition)
+  }
 })();
